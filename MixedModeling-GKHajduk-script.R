@@ -105,17 +105,23 @@ summary(mountain.lm)
 
 ###----- Mixed effects models -----###
 
+library(lme4)
 
 
 ##----- First mixed model -----##
 
-### model
 
+### model
+mixed.lmer <- lmer(testScore ~ bodyLength2 + (1|mountainRange), data = dragons)
 ### plots
+plot(mixed.lmer)  # looks alright, no patterns evident
+
 
 ### summary
-
+summary(mixed.lmer)
 ### variance accounted for by mountain ranges
+qqnorm(resid(mixed.lmer))
+qqline(resid(mixed.lmer))  # points fall nicely onto the line - good!
 
 
 
@@ -124,16 +130,28 @@ summary(mountain.lm)
 head(dragons)  # we have site and mountainRange
 str(dragons)  # we took samples from three sites per mountain range and eight mountain ranges in total
 
-### create new "sample" variable
 
+### create new "sample" variable
+dragons <- within(dragons, sample <- factor(mountainRange:site))
 
 ##----- Second mixed model -----##
 
+
 ### model
+mixed.lmer2 <- lmer(testScore ~ bodyLength2 + (1|mountainRange) + (1|sample), data = dragons)  # the syntax stays the same, but now the nesting is taken into account
 
 ### summary
-
+summary(mixed.lmer2)
 ### plot
+(mm_plot <- ggplot(dragons, aes(x = bodyLength, y = testScore, colour = site)) +
+    facet_wrap(~mountainRange, nrow=2) +   # a panel for each mountain range
+    geom_point(alpha = 0.5) +
+    theme_classic() +
+    geom_line(data = cbind(dragons, pred = predict(mixed.lmer2)), aes(y = pred), linewidth = 1) +  # adding predicted line from mixed model 
+    theme(legend.position = "none",
+          panel.spacing = unit(2, "lines"))  # adding space between panels
+)
+
 
 
 
